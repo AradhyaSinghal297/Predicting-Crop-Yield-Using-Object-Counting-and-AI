@@ -1,4 +1,4 @@
-# Predicting Crop Yield Using Object Counting and AI
+ Predicting Crop Yield Using Object Counting and AI
 
 Description
 
@@ -45,4 +45,7 @@ Version Control: GitHub
 Project Scope
 
 The project focuses on improving agricultural yield estimation through automated crop detection and object counting. It is designed for precision agriculture applications, enabling farmers and agricultural industries to monitor crop production, optimize resources, and make better farming decisions. Future enhancements can include real-time drone monitoring, integration of weather and soil parameters, and deployment as a web or mobile-based solution.
+
+ Predicting-Crop-Yield-Using-Object-Counting-and-AI
+Predicting Crop Yield Using Object Counting and AI is a smart agriculture project that uses computer vision and deep learning models to detect and count crops from images. The object count is used to estimate crop yield accurately, supporting precision farming and improving agricultural planning.
 
