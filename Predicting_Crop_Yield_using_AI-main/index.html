@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CropVision AI — Aradhya Singhal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#06100a;
+  --s1:#0b1f10;
+  --s2:#112616;
+  --s3:#182e1c;
+  --g50:#EAF3DE;--g100:#C0DD97;--g200:#97C459;--g400:#639922;--g600:#3B6D11;--g800:#27500A;
+  --a50:#FAEEDA;--a100:#FAC775;--a200:#EF9F27;--a400:#BA7517;
+  --t50:#E1F5EE;--t200:#5DCAA5;--t400:#1D9E75;
+  --p50:#EEEDFE;--p200:#AFA9EC;--p400:#7F77DD;
+  --text:#dff0cc;--muted:#7aab55;--hint:#3d6628;
+  --accent:#97C459;--gold:#EF9F27;--teal:#1D9E75;--violet:#7F77DD;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'Outfit',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── BACKGROUND ── */
+.bg-canvas{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 100% 55% at 50% 100%,#1a4a0a33 0%,transparent 70%),
+    radial-gradient(ellipse 50% 30% at 10% 20%,#1d9e7511 0%,transparent 60%),
+    radial-gradient(ellipse 40% 25% at 90% 10%,#7f77dd0d 0%,transparent 60%),
+    var(--bg);
+}
+
+.dot-grid{
+  position:fixed;inset:0;z-index:0;
+  background-image:radial-gradient(circle,rgba(151,196,89,0.07) 1px,transparent 1px);
+  background-size:36px 36px;
+}
+
+/* ── WRAPPER ── */
+.page{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:3rem 2rem 8rem}
+
+/* ── ANIM ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%,100%{opacity:0.5}50%{opacity:1}}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:0.6}100%{transform:scale(1.5);opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-6px)}}
+@keyframes scanline{0%{top:-6px}100%{top:100%}}
+@keyframes grain{0%,100%{transform:translate(0,0)}20%{transform:translate(-1px,1px)}40%{transform:translate(1px,-1px)}60%{transform:translate(-1px,0)}80%{transform:translate(1px,1px)}}
+
+.a1{opacity:0;animation:fadeUp 0.7s 0.1s forwards}
+.a2{opacity:0;animation:fadeUp 0.7s 0.25s forwards}
+.a3{opacity:0;animation:fadeUp 0.7s 0.4s forwards}
+.a4{opacity:0;animation:fadeUp 0.7s 0.55s forwards}
+.a5{opacity:0;animation:fadeUp 0.7s 0.7s forwards}
+.a6{opacity:0;animation:fadeUp 0.7s 0.85s forwards}
+.a7{opacity:0;animation:fadeUp 0.7s 1s forwards}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:5rem;padding-bottom:1.5rem;
+  border-bottom:1px solid rgba(151,196,89,0.1);
+}
+
+.logo-wrap{display:flex;align-items:center;gap:14px}
+
+.logo-hex{
+  width:44px;height:44px;
+  background:var(--s2);
+  border:1px solid rgba(151,196,89,0.25);
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+
+.logo-hex::after{
+  content:'';position:absolute;
+  width:2px;height:100%;background:rgba(151,196,89,0.4);
+  top:0;animation:scanline 2.5s linear infinite;
+}
+
+.logo-svg{width:22px;height:22px;position:relative;z-index:1}
+
+.logo-name{
+  display:flex;flex-direction:column;
+  gap:1px;
+}
+
+.logo-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.2rem;font-weight:700;
+  color:var(--text);letter-spacing:-0.01em;
+}
+
+.logo-sub{
+  font-size:10px;font-weight:500;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+.nav-pill{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:500;letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid rgba(151,196,89,0.2);
+  background:rgba(151,196,89,0.05);
+  padding:6px 14px;border-radius:100px;
+}
+
+.nav-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);
+  position:relative;
+}
+
+.nav-dot::after{
+  content:'';position:absolute;inset:-3px;
+  border-radius:50%;border:1px solid var(--accent);
+  animation:pulse-ring 1.8s ease-out infinite;
+}
+
+/* ── HERO ── */
+.hero{margin-bottom:4rem;position:relative}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:1.8rem;
+}
+.eyebrow span{color:var(--accent);font-size:14px;animation:float 3s ease-in-out infinite}
+
+h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(3rem,7vw,5.2rem);
+  font-weight:700;line-height:1.05;letter-spacing:-0.03em;
+  margin-bottom:1rem;
+}
+
+h1 em{font-style:italic;color:var(--accent)}
+h1 .g{color:var(--gold)}
+h1 .t{color:var(--teal)}
+
+.tagline-wrap{
+  display:flex;align-items:flex-start;gap:16px;
+  margin-bottom:2.5rem;
+}
+
+.tagline-bar{
+  width:3px;flex-shrink:0;margin-top:4px;height:100%;
+  background:linear-gradient(180deg,var(--accent) 0%,var(--teal) 100%);
+  border-radius:2px;min-height:80px;
+}
+
+.tagline{
+  font-size:1.1rem;font-weight:300;line-height:1.8;
+  color:rgba(223,240,204,0.7);max-width:640px;
+}
+
+.tagline strong{color:var(--text);font-weight:500}
+
+/* ── AUTHOR BADGE ── */
+.author-section{
+  display:flex;align-items:center;gap:16px;
+  margin-bottom:4rem;
+  padding:1rem 1.4rem;
+  background:var(--s1);
+  border:1px solid rgba(151,196,89,0.12);
+  border-radius:14px;
+  max-width:fit-content;
+}
+
+.author-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,#3B6D11,#1D9E75);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.3rem;font-weight:700;color:#fff;
+  flex-shrink:0;
+}
+
+.author-info{display:flex;flex-direction:column;gap:2px}
+
+.author-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;font-weight:600;
+  color:var(--text);
+}
+
+.author-role{
+  font-size:11.5px;font-weight:400;
+  color:var(--muted);letter-spacing:0.04em;
+}
+
+.author-sep{
+  width:1px;height:36px;
+  background:rgba(151,196,89,0.15);flex-shrink:0;
+}
+
+.author-tags{display:flex;flex-direction:column;gap:4px}
+
+.atag{
+  font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;
+  padding:3px 10px;border-radius:100px;
+}
+
+.atag.green{background:rgba(99,153,34,0.18);color:#97C459}
+.atag.teal{background:rgba(29,158,117,0.15);color:#5DCAA5}
+
+/* ── STAT ROW ── */
+.stat-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;margin-bottom:3.5rem;
+}
+
+.stat-card{
+  background:var(--s1);
+  border:1px solid rgba(151,196,89,0.1);
+  border-radius:14px;padding:1.4rem 1rem;
+  text-align:center;
+  transition:border-color 0.2s,background 0.2s;
+  position:relative;overflow:hidden;
+}
+
+.stat-card::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(151,196,89,0);
+  transition:background 0.3s;
+}
+
+.stat-card:hover{border-color:rgba(151,196,89,0.3);background:var(--s2)}
+.stat-card:hover::before{background:rgba(151,196,89,0.03)}
+
+.stat-n{
+  font-family:'Cormorant Garamond',serif;
+  font-size:2.2rem;font-weight:700;line-height:1;
+  margin-bottom:4px;
+}
+
+.stat-n.green{color:var(--accent)}
+.stat-n.gold{color:var(--gold)}
+.stat-n.teal{color:var(--teal)}
+.stat-n.violet{color:var(--violet)}
+
+.stat-l{
+  font-size:11px;font-weight:500;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--hint);
+}
+
+/* ── DIVIDER ── */
+.divider{
+  display:flex;align-items:center;gap:16px;
+  margin-bottom:2.2rem;
+}
+
+.div-line{flex:1;height:1px;background:rgba(151,196,89,0.1)}
+
+.div-label{
+  font-size:10px;font-weight:500;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--hint);
+  flex-shrink:0;
+}
+
+/* ── FEATURE GRID ── */
+.feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:14px;margin-bottom:3.5rem;
+}
+
+.feat{
+  background:var(--s1);
+  border:1px solid rgba(151,196,89,0.09);
+  border-radius:16px;padding:1.6rem 1.4rem;
+  position:relative;overflow:hidden;
+  transition:border-color 0.25s,background 0.25s,transform 0.2s;
+}
+
+.feat:hover{
+  border-color:rgba(151,196,89,0.28);
+  background:var(--s2);transform:translateY(-3px);
+}
+
+.feat-num{
+  position:absolute;top:1.2rem;right:1.4rem;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:500;
+  color:rgba(151,196,89,0.2);letter-spacing:0.05em;
+}
+
+.feat-icon-wrap{
+  width:46px;height:46px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:1.1rem;
+}
+
+.feat-icon-wrap svg{width:22px;height:22px}
+
+.fi-green{background:rgba(99,153,34,0.18)}
+.fi-gold{background:rgba(186,117,23,0.18)}
+.fi-teal{background:rgba(29,158,117,0.15)}
+.fi-violet{background:rgba(127,119,221,0.15)}
+.fi-coral{background:rgba(216,90,48,0.15)}
+.fi-blue{background:rgba(55,138,221,0.13)}
+
+.feat-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;font-weight:600;
+  color:var(--text);margin-bottom:0.5rem;
+  line-height:1.2;
+}
+
+.feat-body{
+  font-size:0.82rem;font-weight:300;
+  color:rgba(223,240,204,0.6);line-height:1.7;
+}
+
+/* ── PIPELINE STRIP ── */
+.pipeline{
+  display:flex;align-items:center;gap:0;
+  margin-bottom:3.5rem;
+  background:var(--s1);
+  border:1px solid rgba(151,196,89,0.1);
+  border-radius:16px;overflow:hidden;
+}
+
+.pipe-step{
+  flex:1;padding:1.2rem 0.8rem;
+  text-align:center;
+  border-right:1px solid rgba(151,196,89,0.08);
+  position:relative;
+}
+
+.pipe-step:last-child{border-right:none}
+
+.pipe-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:500;letter-spacing:0.1em;
+  color:var(--hint);margin-bottom:6px;
+}
+
+.pipe-label{
+  font-size:0.78rem;font-weight:500;color:var(--muted);
+  line-height:1.4;
+}
+
+.pipe-arrow{
+  position:absolute;right:-8px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;z-index:2;
+  color:rgba(151,196,89,0.25);font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── GITHUB FORM ── */
+.gh-section{margin-bottom:3rem}
+
+.gh-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:0.8rem;
+}
+
+.gh-head-label{
+  font-size:11px;font-weight:500;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+.gh-line{flex:1;height:1px;background:rgba(151,196,89,0.1)}
+
+.gh-form{
+  display:flex;gap:10px;align-items:stretch;
+}
+
+.gh-input-shell{
+  flex:1;
+  display:flex;align-items:center;gap:12px;
+  background:var(--s1);
+  border:1px solid rgba(151,196,89,0.18);
+  border-radius:14px;padding:0 18px;
+  transition:border-color 0.2s;
+}
+
+.gh-input-shell:focus-within{
+  border-color:rgba(151,196,89,0.5);
+  box-shadow:0 0 0 4px rgba(151,196,89,0.07);
+}
+
+.gh-icon-wrap svg{width:18px;height:18px;flex-shrink:0;opacity:0.5}
+
+.gh-input{
+  flex:1;background:transparent;border:none;outline:none;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.82rem;color:var(--text);
+  padding:16px 0;min-width:0;
+}
+
+.gh-input::placeholder{color:rgba(122,171,85,0.35)}
+
+.gh-btn{
+  background:var(--accent);color:#0e1a07;
+  border:none;border-radius:14px;
+  padding:0 26px;
+  font-family:'Outfit',sans-serif;
+  font-size:0.88rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+  transition:background 0.2s,transform 0.15s;
+  letter-spacing:0.02em;
+}
+
+.gh-btn:hover{background:#aace6e}
+.gh-btn:active{transform:scale(0.97)}
+
+.gh-hint{
+  margin-top:8px;
+  font-size:11px;color:rgba(122,171,85,0.4);
+  display:flex;align-items:center;gap:6px;
+}
+
+.gh-hint svg{width:12px;height:12px;opacity:0.4}
+
+.gh-result{
+  display:none;margin-top:12px;
+  background:var(--s2);
+  border:1px solid rgba(151,196,89,0.18);
+  border-radius:12px;padding:1rem 1.2rem;
+  align-items:center;gap:12px;
+}
+
+.gh-result.show{display:flex}
+
+.gh-result-url{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.8rem;color:var(--accent);
+  word-break:break-all;flex:1;
+}
+
+.gh-visit{
+  flex-shrink:0;
+  background:rgba(151,196,89,0.12);
+  border:1px solid rgba(151,196,89,0.22);
+  border-radius:8px;
+  padding:5px 14px;font-size:0.78rem;
+  color:var(--accent);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:500;
+  transition:background 0.2s;
+}
+
+.gh-visit:hover{background:rgba(151,196,89,0.22)}
+
+/* ── TECH TAGS ── */
+.tech-row{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4rem;
+}
+
+.tech-tag{
+  font-size:11px;font-weight:500;letter-spacing:0.06em;
+  padding:5px 14px;border-radius:100px;
+  border:1px solid rgba(151,196,89,0.15);
+  color:var(--muted);background:var(--s1);
+  transition:border-color 0.2s,color 0.2s;
+}
+
+.tech-tag:hover{border-color:rgba(151,196,89,0.35);color:var(--accent)}
+
+/* ── FOOTER ── */
+footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:2rem;
+  border-top:1px solid rgba(151,196,89,0.08);
+}
+
+.footer-l{
+  font-size:11px;letter-spacing:0.12em;text-transform:uppercase;
+  color:rgba(122,171,85,0.28);
+}
+
+.footer-r{
+  display:flex;align-items:center;gap:10px;
+  font-size:11px;color:rgba(122,171,85,0.28);
+  letter-spacing:0.08em;
+}
+
+.footer-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:rgba(151,196,89,0.2);
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  .feat-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .pipeline{flex-direction:column}
+  .pipe-step{border-right:none;border-bottom:1px solid rgba(151,196,89,0.08)}
+  .pipe-step:last-child{border-bottom:none}
+  .gh-form{flex-direction:column}
+  .gh-btn{justify-content:center;padding:16px}
+  h1{font-size:2.8rem}
+  nav{flex-wrap:wrap;gap:12px}
+  footer{flex-direction:column;gap:12px;text-align:center}
+  .author-section{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="dot-grid"></div>
+
+<div class="page">
+
+  <!-- NAV -->
+  <nav class="a1">
+    <div class="logo-wrap">
+      <div class="logo-hex">
+        <svg class="logo-svg" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7z" stroke="#97C459" stroke-width="1.5" fill="rgba(151,196,89,0.1)"/>
+          <path d="M9 12l2 2 4-4" stroke="#97C459" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="logo-name">
+        <span class="logo-title">CropVision AI</span>
+        <span class="logo-sub">Precision Agriculture</span>
+      </div>
+    </div>
+    <div class="nav-pill">
+      <span class="nav-dot"></span>
+      Research Project · 2025
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow a2">
+      <span>✦</span>
+      Computer Vision &nbsp;·&nbsp; Deep Learning &nbsp;·&nbsp; Smart Farming
+    </div>
+
+    <h1 class="a3">
+      Predicting <em>Crop Yield</em><br>
+      via <span class="g">AI-Powered</span><br>
+      <span class="t">Image Counting</span>
+    </h1>
+
+    <div class="tagline-wrap a4">
+      <div class="tagline-bar"></div>
+      <p class="tagline">
+        A research system that uses <strong>convolutional neural networks</strong> and
+        drone-captured field imagery to automatically detect, count, and analyse
+        individual crop instances — translating raw visual data into
+        <strong>reliable seasonal yield forecasts</strong> with minimal human intervention.
+        Bridging the gap between <strong>precision agriculture</strong> and accessible, deployable AI.
+      </p>
+    </div>
+  </div>
+
+  <!-- AUTHOR -->
+  <div class="author-section a4">
+    <div class="author-avatar">AS</div>
+    <div class="author-info">
+      <span class="author-name">Aradhya Singhal</span>
+      <span class="author-role">Project Author &amp; Researcher</span>
+    </div>
+    <div class="author-sep"></div>
+    <div class="author-tags">
+      <span class="atag green">AI / ML</span>
+      <span class="atag teal">AgriTech</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-row a5">
+    <div class="stat-card">
+      <div class="stat-n green">95%+</div>
+      <div class="stat-l">Count Accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-n gold">3×</div>
+      <div class="stat-l">Faster than Manual</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-n teal">CNN</div>
+      <div class="stat-l">Model Architecture</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-n violet">Real-time</div>
+      <div class="stat-l">Field Inference</div>
+    </div>
+  </div>
+
+  <!-- PIPELINE STRIP -->
+  <div class="pipeline a5">
+    <div class="pipe-step">
+      <div class="pipe-num">01 —</div>
+      <div class="pipe-label">Field Image Capture</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">02 —</div>
+      <div class="pipe-label">Preprocessing &amp; Augmentation</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">03 —</div>
+      <div class="pipe-label">CNN Object Detection</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">04 —</div>
+      <div class="pipe-label">Instance Counting</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">05 —</div>
+      <div class="pipe-label">Yield Prediction Output</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="divider a5">
+    <div class="div-line"></div>
+    <span class="div-label">Core Capabilities</span>
+    <div class="div-line"></div>
+  </div>
+
+  <div class="feat-grid a6">
+    <div class="feat">
+      <span class="feat-num">01</span>
+      <div class="feat-icon-wrap fi-green">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="#97C459" stroke-width="1.5"/>
+          <path d="M16.5 16.5L21 21" stroke="#97C459" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M9 11h4M11 9v4" stroke="#97C459" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Image-based Crop Counting</div>
+      <div class="feat-body">Detects and enumerates individual crop instances from drone or field photographs using fine-tuned object detection — eliminating the need for manual tallying across hectares of farmland.</div>
+    </div>
+
+    <div class="feat">
+      <span class="feat-num">02</span>
+      <div class="feat-icon-wrap fi-gold">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 17l4-8 4 5 3-3 4 6" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke="#EF9F27" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+      <div class="feat-title">Yield Forecasting Engine</div>
+      <div class="feat-body">Correlates image-counted crop density with historical harvest data and environmental variables to produce per-hectare yield predictions with measurable seasonal accuracy.</div>
+    </div>
+
+    <div class="feat">
+      <span class="feat-num">03</span>
+      <div class="feat-icon-wrap fi-teal">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.5" fill="none"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.5" fill="none"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.5" fill="none"/>
+          <path d="M17.5 14v7M14 17.5h7" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Scalable Batch Pipeline</div>
+      <div class="feat-body">Processes hundreds of field images in parallel batches — built for large-scale agricultural operations where speed and throughput matter as much as accuracy.</div>
+    </div>
+
+    <div class="feat">
+      <span class="feat-num">04</span>
+      <div class="feat-icon-wrap fi-violet">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" stroke="#7F77DD" stroke-width="1.5" fill="none"/>
+          <path d="M12 8v4l3 3" stroke="#7F77DD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Transfer Learning Models</div>
+      <div class="feat-body">Leverages pre-trained CNN architectures (ResNet, EfficientNet) fine-tuned on agricultural datasets — achieving strong baseline performance even with limited labelled samples.</div>
+    </div>
+
+    <div class="feat">
+      <span class="feat-num">05</span>
+      <div class="feat-icon-wrap fi-coral">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" stroke="#D85A30" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Structured Data Output</div>
+      <div class="feat-body">Exports clean JSON and CSV reports per field segment — ready for integration with farm management systems, dashboards, or downstream analytics workflows.</div>
+    </div>
+
+    <div class="feat">
+      <span class="feat-num">06</span>
+      <div class="feat-icon-wrap fi-blue">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 3L4 7l8 4 8-4-8-4z" stroke="#378ADD" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <path d="M4 12l8 4 8-4" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 17l8 4 8-4" stroke="#378ADD" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="feat-title">Multi-Crop Generalisation</div>
+      <div class="feat-body">Trained across wheat, maize, and rice imagery to generalise across crop types — reducing the need to retrain models from scratch for each new agricultural context.</div>
+    </div>
+  </div>
+
+  <!-- TECH TAGS -->
+  <div class="divider a6">
+    <div class="div-line"></div>
+    <span class="div-label">Tech Stack</span>
+    <div class="div-line"></div>
+  </div>
+
+  <div class="tech-row a6">
+    <span class="tech-tag">Python</span>
+    <span class="tech-tag">PyTorch</span>
+    <span class="tech-tag">OpenCV</span>
+    <span class="tech-tag">YOLOv8</span>
+    <span class="tech-tag">ResNet-50</span>
+    <span class="tech-tag">EfficientNet</span>
+    <span class="tech-tag">NumPy</span>
+    <span class="tech-tag">Pandas</span>
+    <span class="tech-tag">Albumentations</span>
+    <span class="tech-tag">Matplotlib</span>
+    <span class="tech-tag">Jupyter Notebook</span>
+    <span class="tech-tag">Roboflow</span>
+  </div>
+
+  <!-- GITHUB FORM -->
+  <div class="gh-section a7">
+    <div class="gh-head">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="opacity:0.5">
+        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="gh-head-label">GitHub Repository</span>
+      <div class="gh-line"></div>
+    </div>
+
+    <div class="gh-form">
+      <div class="gh-input-shell">
+        <div class="gh-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <input class="gh-input" id="gh-url" type="text" placeholder="https://github.com/AradhyaSinghal/cropvision-ai" autocomplete="off"/>
+      </div>
+      <button class="gh-btn" onclick="handleGo()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        View Repository
+      </button>
+    </div>
+
+    <div class="gh-hint">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Paste your GitHub link and press Enter or click View Repository
+    </div>
+
+    <div class="gh-result" id="gh-result">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:#97C459;flex-shrink:0"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="gh-result-url" id="gh-result-url"></span>
+      <button class="gh-visit" id="gh-visit-btn">Open ↗</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="a7">
+    <span class="footer-l">CropVision AI · Aradhya Singhal</span>
+    <div class="footer-r">
+      <span>Computer Vision</span>
+      <span class="footer-dot"></span>
+      <span>Agriculture AI</span>
+      <span class="footer-dot"></span>
+      <span>2025</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+function handleGo(){
+  const input=document.getElementById('gh-url');
+  const val=input.value.trim();
+  if(!val)return;
+  let url=val;
+  if(!url.startsWith('http'))url='https://'+url;
+  const result=document.getElementById('gh-result');
+  const urlEl=document.getElementById('gh-result-url');
+  const visitBtn=document.getElementById('gh-visit-btn');
+  urlEl.textContent=url;
+  result.classList.add('show');
+  visitBtn.onclick=()=>window.open(url,'_blank');
+}
+document.getElementById('gh-url').addEventListener('keydown',e=>{if(e.key==='Enter')handleGo()});
+</script>
+</body>
+</html>
